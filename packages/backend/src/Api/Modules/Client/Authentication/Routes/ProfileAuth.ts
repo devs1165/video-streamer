@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import validate from 'Api/Validators/Common/validate';
-import ProfileController from 'Api/Modules/Client/Authentication/Controllers/ProfileController';
-import RemovePlatformController from 'Api/Modules/Client/Authentication/Controllers/RemovePlatformController';
-import { RemovePlatformValidator } from 'Api/Modules/Client/Authentication/Validators/ProfileValidators';
-import { asyncMiddlewareHandler } from 'Utils/asyncMiddlewareHandler';
-import { authenticateUser } from 'Api/Middleware/isAuthenticated';
+import validate from '../../../../../Api/Validators/Common/validate';
+import ProfileController from '../../../../../Api/Modules/Client/Authentication/Controllers/ProfileController';
+import RemovePlatformController from '../../../../../Api/Modules/Client/Authentication/Controllers/RemovePlatformController';
+import { RemovePlatformValidator } from '../../../../../Api/Modules/Client/Authentication/Validators/ProfileValidators';
+import { asyncMiddlewareHandler } from '../../../../../Utils/asyncMiddlewareHandler';
+import { authenticateUser } from '../../../../../Api/Middleware/isAuthenticated';
 
 const routes = Router();
 
@@ -20,6 +20,6 @@ routes.delete(
   RemovePlatformValidator,
   asyncMiddlewareHandler(authenticateUser),
   validate,
-  RemovePlatformController.handle,
+  RemovePlatformController.handle
 );
 export default routes;

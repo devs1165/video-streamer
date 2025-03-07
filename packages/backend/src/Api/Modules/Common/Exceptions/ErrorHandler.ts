@@ -3,8 +3,8 @@ import ApplicationError from './ApplicationError';
 import {
   CRITICAL_ERROR_EXITING,
   ERROR,
-} from 'Api/Modules/Common/Helpers/Messages/SystemMessages';
-import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
+} from '../../../../Api/Modules/Common/Helpers/Messages/SystemMessages';
+import { HttpStatusCodeEnum } from "../../../../Utils/HttpStatusCodeEnum";
 
 class ErrorHandler {
   private isTrustedError(error: Error): boolean {

@@ -2,21 +2,21 @@ import express, { NextFunction, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import helmet from 'helmet';
-import { expressConfig } from 'Config//expressConfig';
+import { expressConfig } from '../../../../Config/expressConfig';
 import {
   ILoggingDriver,
   LoggingProviderFactory,
-} from 'Lib/Infra/Internal/Logging';
+} from '../../../../Lib/Infra/Internal/Logging';
 import 'express-async-errors';
-import routes from 'Api/Routes';
-import { errorHandler } from 'Api/Modules/Common/Exceptions/ErrorHandler';
+import routes from '../../../../Api/Routes';
+import { errorHandler } from '../../../../Api/Modules/Common/Exceptions/ErrorHandler';
 import {
   MIDDLEWARE_ATTACHED,
   MYSQLDB_CONNECTED,
   MYSQLDB_CONNECTION_ERROR,
   ROUTES_ATTACHED,
-} from 'Api/Modules/Common/Helpers/Messages/SystemMessages';
-import { DbContext } from 'Lib/Infra/Internal/DBContext';
+} from '../../../../Api/Modules/Common/Helpers/Messages/SystemMessages';
+import { DbContext } from '../../../../Lib/Infra/Internal/DBContext';
 
 export default class Express {
   app: express.Express;

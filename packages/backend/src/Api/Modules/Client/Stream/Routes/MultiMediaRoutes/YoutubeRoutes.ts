@@ -6,11 +6,11 @@ import { asyncMiddlewareHandler } from 'Utils/asyncMiddlewareHandler';
 
 const routes = Router();
 
-routes.get('/auth', validate, YouTubeAuthController.handle);
+// routes.get('/auth', validate, YouTubeAuthController.handle);
 routes.post(
   '/callback',
-  asyncMiddlewareHandler(authenticateUser),
-  validate,
+  // asyncMiddlewareHandler(authenticateUser),
+  // validate,
   YouTubeAuthController.callback,
 );
 

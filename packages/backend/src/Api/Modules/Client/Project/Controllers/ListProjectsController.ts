@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
 import {
   ERROR,
@@ -10,7 +10,7 @@ import { AuthRequest } from 'TypeChecking/GeneralPurpose/AuthRequest';
 import ProjectService from 'Api/Modules/Client/Project/Services/ProjectService';
 
 class ListUserProjectsController {
-  public async handle(request: Request, response: Response) {
+  public async handle(request: Request, response: Response, next: NextFunction): Promise<void> {
     try {
       const user = (request as AuthRequest).authAccount;
 
@@ -21,7 +21,7 @@ class ListUserProjectsController {
         documentSize: Number(limit),
       });
 
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         message: INFORMATION_RETRIEVED,
@@ -30,17 +30,19 @@ class ListUserProjectsController {
           meta: projects.meta,
         },
       });
+      return
     } catch (ListUserProjectsControllerError) {
       console.log(
         '🚀 ~ ListUserProjectsController.handle ListUserProjectsControllerError ->',
         ListUserProjectsControllerError,
       );
 
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 }

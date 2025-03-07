@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
 import {
   SUCCESS,
@@ -22,7 +22,7 @@ import { AuthAccountType } from '../TypeChecking/AuthAccount';
 const dbContext = container.resolve(DbContext);
 
 class EmailSignInController {
-  public async handle(request: Request, response: Response) {
+  public async handle(request: Request, response: Response, next: NextFunction): Promise<void> {
     const queryRunner = await dbContext.getTransactionalQueryRunner();
 
     await queryRunner.startTransaction();
@@ -49,25 +49,27 @@ class EmailSignInController {
         activationToken: otpToken.token,
       });
 
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         message: EMAIL_SIGN_IN_TOKEN_REQUEST_SUCCESS,
       });
+      return
     } catch (EmailSignInControllerhandleError) {
       console.log(
         'EmailSignInController.handle error ->',
         EmailSignInControllerhandleError,
       );
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 
-  public async verifyToken(request: Request, response: Response) {
+  public async verifyToken(request: Request, response: Response, next: NextFunction): Promise<void> {
     const queryRunner = await dbContext.getTransactionalQueryRunner();
     await queryRunner.startTransaction();
 
@@ -76,19 +78,21 @@ class EmailSignInController {
       const tokenData = await AuthTokensService.getUserTokenByToken(token);
 
       if (!tokenData || tokenData.email !== email) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: NO_TOKEN_RECORD,
         });
+        return
       }
 
       if (AuthTokensService.checkTokenExpired(tokenData.expiresOn)) {
-        return response.status(HttpStatusCodeEnum.FORBIDDEN).json({
+        response.status(HttpStatusCodeEnum.FORBIDDEN).json({
           status_code: HttpStatusCodeEnum.FORBIDDEN,
           status: ERROR,
           message: TOKEN_EXPIRED,
         });
+        return
       }
 
       const userProfile = await AuthAccountService.findOrCreateAuthAccount({
@@ -98,11 +102,12 @@ class EmailSignInController {
       });
 
       if (!userProfile) {
-        return response.status(HttpStatusCodeEnum.NOT_FOUND).json({
+        response.status(HttpStatusCodeEnum.NOT_FOUND).json({
           status_code: HttpStatusCodeEnum.NOT_FOUND,
           status: ERROR,
           message: 'User Account Not Found',
         });
+        return
       }
 
       await AuthTokensService.deleteUserToken(token);
@@ -115,7 +120,7 @@ class EmailSignInController {
 
       await queryRunner.commitTransaction();
 
-      return response
+      response
         .setHeader('Authorization', `Bearer ${jwtToken}`)
         .status(HttpStatusCodeEnum.OK)
         .json({
@@ -125,17 +130,19 @@ class EmailSignInController {
           token: `Bearer ${jwtToken}`,
           data: userProfile.getProfile(),
         });
+      return
     } catch (verifyTokenError) {
       console.error(
         'EmailSignInController.verifyToken error ->',
         verifyTokenError,
       );
 
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 }

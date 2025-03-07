@@ -353,8 +353,10 @@ class ProjectService {
     if (project?.stream_tokens) {
       const validTokenTypes = new Set(
         project?.stream_tokens
-          .filter((token) => token.token)
-          .map((token) => token.type),
+          .filter((token: { token: string }) => token.token)
+          .map((token: { type: string }) => token.type)
+        // .filter((token) => token.token)
+        // .map((token) => token.type),
       );
       const missingTokens = requestedPlatforms.filter(
         (platform) => !validTokenTypes.has(platform),

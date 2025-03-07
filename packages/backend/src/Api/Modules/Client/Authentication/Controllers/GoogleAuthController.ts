@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
 import GoogleAuthService from 'Api/Modules/Client/Authentication/Services/GoogleAuthService';
 import {
@@ -16,25 +16,27 @@ import AuthAccountService from '../Services/AuthAccountService';
 const dbContext = container.resolve(DbContext);
 
 class GoogleAuthController {
-  public async handle(request: Request, response: Response) {
+  public async handle(request: Request, response: Response, next: NextFunction): Promise<void> {
     try {
       const googleAuthUrl = GoogleAuthService.getGoogleAuthUrl();
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         data: { authUrl: googleAuthUrl },
       });
+      return
     } catch (error) {
       console.log('GoogleAuthController.handle error ->', error);
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 
-  public async callback(request: Request, response: Response) {
+  public async callback(request: Request, response: Response, next: NextFunction): Promise<void> {
     const queryRunner = await dbContext.getTransactionalQueryRunner();
     await queryRunner.startTransaction();
 
@@ -42,20 +44,22 @@ class GoogleAuthController {
       const { code } = request.body;
 
       if (!code) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: 'Authorization code is missing',
         });
+        return
       }
 
       const token = await GoogleAuthService.getGoogleToken(code.toString());
       if (!token) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: 'Token not found',
         });
+        return
       }
       const userInfo = await GoogleAuthService.getGoogleUserInfo(token);
 
@@ -68,11 +72,12 @@ class GoogleAuthController {
 
       if (!googleAuthAccount) {
         await queryRunner.rollbackTransaction();
-        return response.status(HttpStatusCodeEnum.NOT_FOUND).json({
+        response.status(HttpStatusCodeEnum.NOT_FOUND).json({
           status_code: HttpStatusCodeEnum.NOT_FOUND,
           status: ERROR,
           message: 'GOOGLE_AUTH_ACCOUNT_NOT_FOUND',
         });
+        return
       }
 
       const jwtToken = JwtHelper.signUser({
@@ -83,7 +88,7 @@ class GoogleAuthController {
 
       await queryRunner.commitTransaction();
 
-      return response
+      response
         .setHeader('Authorization', `Bearer ${jwtToken}`)
         .status(HttpStatusCodeEnum.OK)
         .json({
@@ -93,14 +98,16 @@ class GoogleAuthController {
           token: `Bearer ${jwtToken}`,
           data: googleAuthAccount.getProfile(),
         });
+      return
     } catch (error) {
       console.log('GoogleAuthController.callback error ->', error);
       await queryRunner.rollbackTransaction();
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
 import {
   SUCCESS,
@@ -13,7 +13,7 @@ import { DbContext } from 'Lib/Infra/Internal/DBContext';
 
 const dbContext = container.resolve(DbContext);
 class NotificationController {
-  public async handle(request: Request, response: Response) {
+  public async handle(request: Request, response: Response, next: NextFunction): Promise<void> {
     try {
       const user = (request as AuthRequest).authAccount;
 
@@ -22,28 +22,31 @@ class NotificationController {
       );
 
       if (!userProfile) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: 'User Account Not Found',
         });
+        return;
       }
 
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         data: userProfile.getNotifications(),
       });
+      return;
     } catch (error) {
       console.log('NotificationController.handle error ->', error);
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return;
     }
   }
-  public async fetchByIdentifier(request: Request, response: Response) {
+  public async fetchByIdentifier(request: Request, response: Response, next: NextFunction): Promise<void> {
     const queryRunner = await dbContext.getTransactionalQueryRunner();
     try {
       const { notificationId } = request.params;
@@ -55,11 +58,12 @@ class NotificationController {
       );
 
       if (!userProfile) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: 'User Account Not Found',
         });
+        return;
       }
 
       const notification = await AuthAccountService.getNotificationByIdentifier(
@@ -70,19 +74,21 @@ class NotificationController {
 
       await queryRunner.commitTransaction();
 
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         data: notification,
       });
+      return;
     } catch (error) {
       console.log('NotificationController.fetchByIdentifier error ->', error);
       await queryRunner.rollbackTransaction();
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { container } from 'tsyringe';
 import ProjectService from 'Api/Modules/Client/Project/Services/ProjectService';
 import { DbContext } from 'Lib/Infra/Internal/DBContext';
@@ -20,7 +20,7 @@ const dbContext = container.resolve(DbContext);
 class CreateProjectController {
   loggingProvider: ILoggingDriver = LoggingProviderFactory.build();
 
-  public async handle(request: Request, response: Response) {
+  public async handle(request: Request, response: Response, next: NextFunction): Promise<void> {
     const queryRunner = await dbContext.getTransactionalQueryRunner();
 
     await queryRunner.startTransaction();
@@ -34,11 +34,12 @@ class CreateProjectController {
       );
 
       if (projectExists) {
-        return response.status(HttpStatusCodeEnum.CONFLICT).json({
+        response.status(HttpStatusCodeEnum.CONFLICT).json({
           status_code: HttpStatusCodeEnum.CONFLICT,
           status: ERROR,
           message: `Project with title ${title} already exists.`,
         });
+        return
       }
 
       const project = await ProjectService.createProject({
@@ -60,12 +61,13 @@ class CreateProjectController {
       console.log(`PROJECT CREATED SUCCESSFULLY ${project}`);
       await queryRunner.commitTransaction();
 
-      return response.status(HttpStatusCodeEnum.CREATED).json({
+      response.status(HttpStatusCodeEnum.CREATED).json({
         status_code: HttpStatusCodeEnum.CREATED,
         status: SUCCESS,
         message: RESOURCE_RECORD_CREATED_SUCCESSFULLY('Project'),
         results: project,
       });
+      return
     } catch (CreateProjectControllerError) {
       console.error(
         '🚀 ~ CreateProjectController.handle CreateProjectControllerError ->',
@@ -74,11 +76,12 @@ class CreateProjectController {
 
       await queryRunner.rollbackTransaction();
 
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 }

@@ -11,15 +11,16 @@ export const validateProjectToken = async (
   request: Request,
   response: Response,
   next: NextFunction,
-) => {
+): Promise<void> => {
   const token = request.query['token'];
 
   if (!token) {
-    return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+    response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
       status_code: HttpStatusCodeEnum.BAD_REQUEST,
       status: ERROR,
       message: 'Project token is required',
     });
+    return
   }
 
   try {
@@ -34,17 +35,19 @@ export const validateProjectToken = async (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (TokenValidationError: any) {
     if (TokenValidationError.name === 'TokenExpiredError') {
-      return response.status(HttpStatusCodeEnum.INVITATION_EXPIRED).json({
+      response.status(HttpStatusCodeEnum.INVITATION_EXPIRED).json({
         status_code: HttpStatusCodeEnum.INVITATION_EXPIRED,
         status: ERROR,
         message: INVITATION_EXPIRED,
       });
+      return
     }
 
-    return response.status(HttpStatusCodeEnum.FORBIDDEN).json({
+    response.status(HttpStatusCodeEnum.FORBIDDEN).json({
       status_code: HttpStatusCodeEnum.FORBIDDEN,
       status: ERROR,
       message: INVALID_TOKEN,
     });
+    return
   }
 };

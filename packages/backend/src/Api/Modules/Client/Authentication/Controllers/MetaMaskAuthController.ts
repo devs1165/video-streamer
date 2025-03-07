@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import MetaMaskAuthService from 'Api/Modules/Client/Authentication/Services/MetaMaskAuthService';
 import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
 import {
@@ -16,18 +16,19 @@ import { JwtHelper } from 'Api/Modules/Common/Helpers/JwtHelper';
 const dbContext = container.resolve(DbContext);
 
 class MetaMaskAuthController {
-  public async handle(request: Request, response: Response) {
+  public async handle(request: Request, response: Response, next: NextFunction): Promise<void> {
     const queryRunner = await dbContext.getTransactionalQueryRunner();
     await queryRunner.startTransaction();
 
     try {
       const { address } = request.body;
       if (!address) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: 'MetaMask Wallet Address is required',
         });
+        return;
       }
 
       const metaMaskAuthAccount =
@@ -39,32 +40,35 @@ class MetaMaskAuthController {
 
       if (!metaMaskAuthAccount) {
         await queryRunner.rollbackTransaction();
-        return response.status(HttpStatusCodeEnum.NOT_FOUND).json({
+        response.status(HttpStatusCodeEnum.NOT_FOUND).json({
           status_code: HttpStatusCodeEnum.NOT_FOUND,
           status: ERROR,
           message: 'USER_NOT_FOUND',
         });
+        return;
       }
 
       await queryRunner.commitTransaction();
 
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         data: metaMaskAuthAccount.forWallet,
       });
+      return;
     } catch (error) {
       console.log('MetaMaskAuthController.auth error ->', error);
       await queryRunner.rollbackTransaction();
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return;
     }
   }
 
-  public async verify(request: Request, response: Response) {
+  public async verify(request: Request, response: Response, next: NextFunction): Promise<void> {
     const queryRunner = await dbContext.getTransactionalQueryRunner();
     await queryRunner.startTransaction();
 
@@ -72,11 +76,12 @@ class MetaMaskAuthController {
       const { address, signature } = request.body;
 
       if (!address || !signature) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: 'Address and signature are required',
         });
+        return;
       }
 
       const isAuthenticated = await MetaMaskAuthService.verifySignature(
@@ -87,11 +92,12 @@ class MetaMaskAuthController {
 
       if (!isAuthenticated) {
         await queryRunner.rollbackTransaction();
-        return response.status(HttpStatusCodeEnum.UNAUTHENTICATED).json({
+        response.status(HttpStatusCodeEnum.UNAUTHENTICATED).json({
           status_code: HttpStatusCodeEnum.UNAUTHENTICATED,
           status: ERROR,
           message: 'Invalid signature',
         });
+        return;
       }
 
       const metaMaskAuthAccount =
@@ -99,11 +105,12 @@ class MetaMaskAuthController {
 
       if (!metaMaskAuthAccount) {
         await queryRunner.rollbackTransaction();
-        return response.status(HttpStatusCodeEnum.UNAUTHENTICATED).json({
+        response.status(HttpStatusCodeEnum.UNAUTHENTICATED).json({
           status_code: HttpStatusCodeEnum.UNAUTHENTICATED,
           status: ERROR,
           message: 'User not found',
         });
+        return;
       }
 
       const token = JwtHelper.signUser({
@@ -114,7 +121,7 @@ class MetaMaskAuthController {
 
       await queryRunner.commitTransaction();
 
-      return response
+      response
         .setHeader('Authorization', `Bearer ${token}`)
         .status(HttpStatusCodeEnum.OK)
         .json({
@@ -122,14 +129,16 @@ class MetaMaskAuthController {
           status: SUCCESS,
           message: METAMASK_AUTHENTICATION_SUCCESS,
         });
+      return;
     } catch (error) {
       console.log('MetaMaskAuthController.verify error ->', error);
       await queryRunner.rollbackTransaction();
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return;
     }
   }
 }

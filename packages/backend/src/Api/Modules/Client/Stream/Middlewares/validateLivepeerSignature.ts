@@ -12,7 +12,8 @@ export const validateLivepeerSignature = (
   const sharedSecret = streamConfig.livepeerSharedSecret;
 
   if (!signature || !sharedSecret) {
-    return response.status(403).json({ error: 'Unauthorized request' });
+    response.status(403).json({ error: 'Unauthorized request' });
+    return;
   }
 
   const [, signatureHash] = signature?.split(',');
@@ -23,7 +24,8 @@ export const validateLivepeerSignature = (
     .update(JSON.stringify(request.body))
     .digest('hex');
   if (hash !== actualSignature) {
-    return response.status(403).json({ error: 'Invalid signature' });
+    response.status(403).json({ error: 'Invalid signature' });
+    return;
   }
 
   next();

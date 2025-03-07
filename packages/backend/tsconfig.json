@@ -29,6 +29,9 @@
     "strictPropertyInitialization": false,
     "skipLibCheck": true
   },
-  "include": ["./src/**/*", "./types/"],
+  "include": [
+    "src",
+    "types"
+     ],// include the types folder]//["./src/**/*", "./types/"],
   "exclude": ["node_modules", "dist"]
 }

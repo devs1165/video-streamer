@@ -1,24 +1,24 @@
 import { Router } from 'express';
-import CreateStreamController from 'Api/Modules/Client/Stream/Controllers/StreamController/CreateStreamController';
-import FetchStreamByIdentifierController from 'Api/Modules/Client/Stream/Controllers/StreamController/FetchStreamByIdentifierController';
-import FetchAllStreamsController from 'Api/Modules/Client/Stream/Controllers/StreamController/FetchAllStreamsController';
-import UpdateStreamController from 'Api/Modules/Client/Stream/Controllers/StreamController/UpdateStreamController';
-import DeleteStreamController from 'Api/Modules/Client/Stream/Controllers/StreamController/DeleteStreamController';
-import GenerateAccessKeyController from 'Api/Modules/Client/Stream/Controllers/StreamController/GenerateAccessTokenController';
-import VerifyAccessKeyController from 'Api/Modules/Client/Stream/Controllers/StreamController/VerifyAccessKeyController';
-import TerminateStreamController from 'Api/Modules/Client/Stream/Controllers/StreamController/TerminateStreamController';
-import SuspendStreamController from 'Api/Modules/Client/Stream/Controllers/StreamController/SuspendStreamController';
-import ActivateStreamController from 'Api/Modules/Client/Stream/Controllers/StreamController/ActivateStreamController';
-import { asyncMiddlewareHandler } from 'Utils/asyncMiddlewareHandler';
-import { authenticateUser } from 'Api/Middleware/isAuthenticated';
-import validate from 'Api/Validators/Common/validate';
+import CreateStreamController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/CreateStreamController';
+import FetchStreamByIdentifierController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/FetchStreamByIdentifierController';
+import FetchAllStreamsController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/FetchAllStreamsController';
+import UpdateStreamController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/UpdateStreamController';
+import DeleteStreamController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/DeleteStreamController';
+import GenerateAccessKeyController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/GenerateAccessTokenController';
+import VerifyAccessKeyController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/VerifyAccessKeyController';
+import TerminateStreamController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/TerminateStreamController';
+import SuspendStreamController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/SuspendStreamController';
+import ActivateStreamController from '../../../../../Api/Modules/Client/Stream/Controllers/StreamController/ActivateStreamController';
+import { asyncMiddlewareHandler } from '../../../../../Utils/asyncMiddlewareHandler';
+import { authenticateUser } from '../../../../../Api/Middleware/isAuthenticated';
+import validate from '../../../../../Api/Validators/Common/validate';
 import {
   CreateStreamValidator,
   UpdateStreamValidator,
   AccessStreamValidator,
   WebhookStreamValidator,
-} from 'Api/Modules/Client/Stream/Validators/StreamValidators';
-import { validateLivepeerSignature } from 'Api/Modules/Client/Stream/Middlewares/validateLivepeerSignature';
+} from '../../../../../Api/Modules/Client/Stream/Validators/StreamValidators';
+import { validateLivepeerSignature } from '../../../../../Api/Modules/Client/Stream/Middlewares/validateLivepeerSignature';
 import StreamEventController from '../Controllers/StreamController/WebhooksEvent/StreamEventController';
 import { AccessProjectIdentifierValidator } from '../../Project/Validators/ProjectValidators';
 

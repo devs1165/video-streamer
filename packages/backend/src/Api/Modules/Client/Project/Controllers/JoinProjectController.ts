@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
 import {
   ERROR,
@@ -15,7 +15,7 @@ import ProjectService from 'Api/Modules/Client/Project/Services/ProjectService';
 const dbContext = container.resolve(DbContext);
 
 class JoinProjectController {
-  public async handle(request: Request, response: Response) {
+  public async handle(request: Request, response: Response, next: NextFunction): Promise<void> {
     const queryRunner = await dbContext.getTransactionalQueryRunner();
 
     await queryRunner.startTransaction();
@@ -25,21 +25,23 @@ class JoinProjectController {
       const project = await ProjectService.getProjectByIdentifier(projectId);
 
       if (!project) {
-        return response.status(HttpStatusCodeEnum.NOT_FOUND).json({
+        response.status(HttpStatusCodeEnum.NOT_FOUND).json({
           status_code: HttpStatusCodeEnum.NOT_FOUND,
           status: ERROR,
           message: 'Project not found.',
         });
+        return
       }
 
       const decodedToken = JwtHelper.verifyToken(String(token));
 
       if (!decodedToken) {
-        return response.status(HttpStatusCodeEnum.FORBIDDEN).json({
+        response.status(HttpStatusCodeEnum.FORBIDDEN).json({
           status_code: HttpStatusCodeEnum.FORBIDDEN,
           status: ERROR,
           message: INVALID_TOKEN_TYPE,
         });
+        return
       }
 
       const { userId, role } = decodedToken;
@@ -51,11 +53,12 @@ class JoinProjectController {
 
       await queryRunner.commitTransaction();
 
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         message: PEER_ADDED_TO_PROJECT,
       });
+      return
     } catch (JoinProjectError) {
       console.log(
         '🚀 ~ JoinProjectController.handle JoinProjectError ->',
@@ -63,11 +66,12 @@ class JoinProjectController {
       );
       await queryRunner.rollbackTransaction();
 
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
 import {
   ERROR,
@@ -16,7 +16,7 @@ import {
 } from 'Api/Modules/Common/Helpers/Messages/SystemMessageFunctions';
 
 class FetchProjectByIdentifierController {
-  public async handle(request: Request, response: Response) {
+  public async handle(request: Request, response: Response, next: NextFunction): Promise<void> {
     try {
       const user = (request as AuthRequest).authAccount;
 
@@ -25,39 +25,43 @@ class FetchProjectByIdentifierController {
       const project = await ProjectService.getProjectByIdentifier(projectId);
 
       if (project === NULL_OBJECT) {
-        return response.status(HttpStatusCodeEnum.NOT_FOUND).json({
+        response.status(HttpStatusCodeEnum.NOT_FOUND).json({
           status_code: HttpStatusCodeEnum.NOT_FOUND,
           status: ERROR,
           message: RESOURCE_RECORD_NOT_FOUND(PROJECT_RESOURCE),
         });
+        return
       }
 
       const isAuthorizedUser = await ProjectService.viewProject(project, user);
       if (!isAuthorizedUser) {
-        return response.status(HttpStatusCodeEnum.FORBIDDEN).json({
+        response.status(HttpStatusCodeEnum.FORBIDDEN).json({
           status_code: HttpStatusCodeEnum.FORBIDDEN,
           status: ERROR,
           message: UNAUTHORIZED_OPERATION,
         });
+        return
       }
 
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         message: RESOURCE_FETCHED_SUCCESSFULLY('PROJECT'),
         results: project.singleView(),
       });
+      return
     } catch (FetchProjectByIdentifierControllerError) {
       console.log(
         '🚀 ~ FetchProjectByIdentifierController.handle FetchProjectByIdentifierControllerError ->',
         FetchProjectByIdentifierControllerError,
       );
 
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
 import TwitchAuthService from 'Api/Modules/Client/Stream/Services/MultiMediaServices/TwitchService';
 import {
@@ -15,35 +15,38 @@ import { AuthRequest } from 'Api/TypeChecking';
 import { Platform } from '../../TypeChecking/MultiStreamUserDestination';
 
 class TwitchAuthController {
-  public async handle(request: Request, response: Response) {
+  public async handle(request: Request, response: Response, next: NextFunction): Promise<void> {
     try {
       const authUrl = TwitchAuthService.getTwitchAuthUrl();
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         data: { authUrl },
       });
+      return;
     } catch (error) {
       console.log('TwitchAuthController.auth error ->', error);
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return;
     }
   }
 
-  public async callback(request: Request, response: Response) {
+  public async callback(request: Request, response: Response, next: NextFunction): Promise<void> {
     try {
       const { code } = request.query;
       const user = (request as AuthRequest).authAccount;
 
       if (!code) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: AUTHORIZATION_CODE_MISSING,
         });
+        return;
       }
 
       const tokenData = await TwitchAuthService.exchangeCodeForTokens(
@@ -51,11 +54,12 @@ class TwitchAuthController {
       );
 
       if (tokenData == NULL_OBJECT) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: RESOURCE_NOT_CREATED,
         });
+        return;
       }
 
       const updatedAuthAccount = await AuthAccountService.updateStreamTokens(
@@ -70,25 +74,28 @@ class TwitchAuthController {
       );
 
       if (updatedAuthAccount == NULL_OBJECT) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: RESOURCE_NOT_CREATED,
         });
+        return;
       }
 
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         message: TWITCH_AUTHENTICATION_SUCCESS,
       });
+      return;
     } catch (error) {
       console.log('TwitchAuthController.callback error ->', error);
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return;
     }
   }
 }

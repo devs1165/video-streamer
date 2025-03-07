@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { HttpStatusCodeEnum } from 'Utils/HttpStatusCodeEnum';
 import GitHubAuthService from 'Api/Modules/Client/Authentication/Services/GithubAuthService';
 import {
@@ -16,25 +16,27 @@ import AuthAccountService from '../Services/AuthAccountService';
 const dbContext = container.resolve(DbContext);
 
 class GitHubAuthController {
-  public async handle(req: Request, response: Response) {
+  public async handle(req: Request, response: Response, next: NextFunction): Promise<void> {
     try {
       const gitHubAuthUrl = GitHubAuthService.getGitHubAuthUrl();
-      return response.status(HttpStatusCodeEnum.OK).json({
+      response.status(HttpStatusCodeEnum.OK).json({
         status_code: HttpStatusCodeEnum.OK,
         status: SUCCESS,
         data: { authUrl: gitHubAuthUrl },
       });
+      return
     } catch (error) {
       console.log('GitHubAuthController.handle error ->', error);
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 
-  public async callback(request: Request, response: Response) {
+  public async callback(request: Request, response: Response, next: NextFunction): Promise<void> {
     const queryRunner = await dbContext.getTransactionalQueryRunner();
 
     await queryRunner.startTransaction();
@@ -42,20 +44,22 @@ class GitHubAuthController {
       const { code } = request.body;
 
       if (!code) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: 'Authorization code is missing',
         });
+        return
       }
 
       const token = await GitHubAuthService.getGitHubToken(code.toString());
       if (!token) {
-        return response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
+        response.status(HttpStatusCodeEnum.BAD_REQUEST).json({
           status_code: HttpStatusCodeEnum.BAD_REQUEST,
           status: ERROR,
           message: 'Token not found',
         });
+        return
       }
       const userInfo = await GitHubAuthService.getGitHubUserInfo(token);
       const gitHubAuthAccount =
@@ -67,11 +71,12 @@ class GitHubAuthController {
 
       if (!gitHubAuthAccount) {
         await queryRunner.rollbackTransaction();
-        return response.status(HttpStatusCodeEnum.NOT_FOUND).json({
+        response.status(HttpStatusCodeEnum.NOT_FOUND).json({
           status_code: HttpStatusCodeEnum.NOT_FOUND,
           status: ERROR,
           message: 'GITHUB_AUTH_ACCOUNT_NOT_FOUND',
         });
+        return
       }
 
       const jwtToken = JwtHelper.signUser({
@@ -81,7 +86,7 @@ class GitHubAuthController {
       });
 
       await queryRunner.commitTransaction();
-      return response
+      response
         .setHeader('Authorization', `Bearer ${jwtToken}`)
         .status(HttpStatusCodeEnum.OK)
         .json({
@@ -91,14 +96,16 @@ class GitHubAuthController {
           token: `Bearer ${jwtToken}`,
           data: gitHubAuthAccount.getProfile(),
         });
+      return
     } catch (error) {
       console.log('GitHubAuthController.callback error ->', error);
       await queryRunner.rollbackTransaction();
-      return response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
+      response.status(HttpStatusCodeEnum.INTERNAL_SERVER_ERROR).json({
         status_code: HttpStatusCodeEnum.INTERNAL_SERVER_ERROR,
         status: ERROR,
         message: SOMETHING_WENT_WRONG,
       });
+      return
     }
   }
 }

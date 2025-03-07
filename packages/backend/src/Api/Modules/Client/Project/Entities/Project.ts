@@ -7,10 +7,10 @@ import {
   ManyToMany,
   JoinTable,
 } from 'typeorm';
-import { AuthAccount } from 'Api/Modules/Client/Authentication/Entities/AuthAccount';
+import { AuthAccount } from '../../../../../Api/Modules/Client/Authentication/Entities/AuthAccount';
 import { ProjectPeer } from '../TypeChecking/ProjectRole';
-import { BaseEntity } from 'src/Entities/Base';
-import { Stream } from 'Api/Modules/Client/Stream/Entities/Stream';
+import { BaseEntity } from '../../../../../../src/Entities/Base';
+import { Stream } from '../../../../../Api/Modules/Client/Stream/Entities/Stream';
 
 @Entity('projects')
 export class Project extends BaseEntity {
@@ -42,6 +42,7 @@ export class Project extends BaseEntity {
     inverseJoinColumn: { name: 'auth_account_id', referencedColumnName: 'id' },
   })
   peers_ids: AuthAccount[];
+  stream_tokens: any;
 
   public singleView() {
     return {

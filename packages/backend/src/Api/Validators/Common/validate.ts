@@ -5,13 +5,17 @@ import { validationResult } from 'express-validator';
 const validate = (request: Request, response: Response, next: NextFunction) => {
   const errors = validationResult(request);
 
-  if (errors.isEmpty()) return next();
+  if (errors.isEmpty()) {
+    next()
+  } else {
 
-  return response.status(422).json({
-    status_code: 422,
-    message: VALIDATION_ERROR,
-    status: 'error',
-    errors: errors.array(),
-  });
+    response.status(422).json({
+      status_code: 422,
+      message: VALIDATION_ERROR,
+      status: 'error',
+      errors: errors.array(),
+    });
+  }
+
 };
 export default validate;
