@@ -9,7 +9,7 @@ const userSignUpValidator = [
     })
     .trim()
     .escape(),
-  body('last_name', 'First name should be at least 3 characters')
+  body('last_name', 'Last name should be at least 3 characters')
     .isLength({
       min: 3,
     })
